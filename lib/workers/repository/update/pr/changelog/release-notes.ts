@@ -10,17 +10,21 @@ import { newlineRegex, regEx } from '../../../../../util/regex';
 import { coerceString } from '../../../../../util/string';
 import { validateUrl } from '../../../../../util/url';
 import type { BranchUpgradeConfig } from '../../../../types';
-import * as bitbucket from './bitbucket';
-import * as gitea from './gitea';
-import * as github from './github';
-import * as gitlab from './gitlab';
+import releaseNote from './release-notes-api';
 import type {
   ChangeLogFile,
   ChangeLogNotes,
   ChangeLogProject,
   ChangeLogRelease,
   ChangeLogResult,
+  ReleaseNoteSource,
 } from './types';
+
+export function getReleaseNoteSourceFor(
+  platform: string
+): ReleaseNoteSource | null {
+  return releaseNote.get(platform) ?? null;
+}
 
 const markdown = new MarkdownIt('zero');
 markdown.enable(['heading', 'lheading']);
@@ -34,19 +38,12 @@ export async function getReleaseList(
   logger.trace('getReleaseList()');
   const { apiBaseUrl, repository, type } = project;
   try {
-    switch (type) {
-      case 'gitea':
-        return await gitea.getReleaseList(project, release);
-      case 'gitlab':
-        return await gitlab.getReleaseList(project, release);
-      case 'github':
-        return await github.getReleaseList(project, release);
-      case 'bitbucket':
-        return bitbucket.getReleaseList(project, release);
-      default:
-        logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
-        return [];
+    const fetch = getReleaseNoteSourceFor(type);
+    if (fetch === null) {
+      logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
+      return [];
     }
+    return await fetch.getReleaseList(project, release);
   } catch (err) /* istanbul ignore next */ {
     if (err.statusCode === 404) {
       logger.debug({ repository, type, apiBaseUrl }, 'getReleaseList 404');
@@ -244,35 +241,16 @@ export async function getReleaseNotesMdFileInner(
   const apiBaseUrl = project.apiBaseUrl;
   const sourceDirectory = project.sourceDirectory!;
   try {
-    switch (type) {
-      case 'gitea':
-        return await gitea.getReleaseNotesMd(
-          repository,
-          apiBaseUrl,
-          sourceDirectory
-        );
-      case 'gitlab':
-        return await gitlab.getReleaseNotesMd(
-          repository,
-          apiBaseUrl,
-          sourceDirectory
-        );
-      case 'github':
-        return await github.getReleaseNotesMd(
-          repository,
-          apiBaseUrl,
-          sourceDirectory
-        );
-      case 'bitbucket':
-        return await bitbucket.getReleaseNotesMd(
-          repository,
-          apiBaseUrl,
-          sourceDirectory
-        );
-      default:
-        logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
-        return null;
+    const fetch = getReleaseNoteSourceFor(type);
+    if (fetch === null) {
+      logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
+      return null;
     }
+    return await fetch.getReleaseNotesMd(
+      repository,
+      apiBaseUrl,
+      sourceDirectory
+    );
   } catch (err) /* istanbul ignore next */ {
     if (err.statusCode === 404) {
       logger.debug(

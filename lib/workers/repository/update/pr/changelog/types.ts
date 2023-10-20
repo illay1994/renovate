@@ -1,3 +1,16 @@
+export abstract class ReleaseNoteSource {
+  abstract getReleaseList(
+    project: ChangeLogProject,
+    _release: ChangeLogRelease
+  ): Promise<ChangeLogNotes[]>;
+
+  abstract getReleaseNotesMd(
+    repository: string,
+    apiBaseUrl: string,
+    sourceDirectory?: string
+  ): Promise<ChangeLogFile | null>;
+}
+
 export interface ChangeLogNotes {
   body?: string;
   id?: number;
