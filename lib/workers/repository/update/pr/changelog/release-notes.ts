@@ -9,22 +9,15 @@ import { linkify } from '../../../../../util/markdown';
 import { newlineRegex, regEx } from '../../../../../util/regex';
 import { coerceString } from '../../../../../util/string';
 import { validateUrl } from '../../../../../util/url';
-import type { BranchUpgradeConfig } from '../../../../types';
-import releaseNote from './release-notes-api';
 import type {
+  ChangeLogConfig,
+  ChangeLogContentSource,
   ChangeLogFile,
   ChangeLogNotes,
   ChangeLogProject,
   ChangeLogRelease,
   ChangeLogResult,
-  ReleaseNoteSource,
 } from './types';
-
-export function getReleaseNoteSourceFor(
-  platform: string
-): ReleaseNoteSource | null {
-  return releaseNote.get(platform) ?? null;
-}
 
 const markdown = new MarkdownIt('zero');
 markdown.enable(['heading', 'lheading']);
@@ -33,17 +26,17 @@ const repositoriesToSkipMdFetching = ['facebook/react-native'];
 
 export async function getReleaseList(
   project: ChangeLogProject,
-  release: ChangeLogRelease
+  release: ChangeLogRelease,
+  source: ChangeLogContentSource
 ): Promise<ChangeLogNotes[]> {
   logger.trace('getReleaseList()');
   const { apiBaseUrl, repository, type } = project;
   try {
-    const fetch = getReleaseNoteSourceFor(type);
-    if (fetch === null) {
+    if (source === null) {
       logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
       return [];
     }
-    return await fetch.getReleaseList(project, release);
+    return await source.getReleaseList(project, release);
   } catch (err) /* istanbul ignore next */ {
     if (err.statusCode === 404) {
       logger.debug({ repository, type, apiBaseUrl }, 'getReleaseList 404');
@@ -59,7 +52,8 @@ export async function getReleaseList(
 
 export function getCachedReleaseList(
   project: ChangeLogProject,
-  release: ChangeLogRelease
+  release: ChangeLogRelease,
+  source: ChangeLogContentSource
 ): Promise<ChangeLogNotes[]> {
   const { repository, apiBaseUrl } = project;
   // TODO: types (#22198)
@@ -69,7 +63,7 @@ export function getCachedReleaseList(
   if (cachedResult !== undefined) {
     return cachedResult;
   }
-  const promisedRes = getReleaseList(project, release);
+  const promisedRes = getReleaseList(project, release, source);
   memCache.set(cacheKey, promisedRes);
   return promisedRes;
 }
@@ -126,13 +120,13 @@ export function massageName(
 export async function getReleaseNotes(
   project: ChangeLogProject,
   release: ChangeLogRelease,
-  config: BranchUpgradeConfig
+  config: ChangeLogConfig
 ): Promise<ChangeLogNotes | null> {
   const { packageName, repository } = project;
   const { version, gitRef } = release;
   // TODO: types (#22198)
   logger.trace(`getReleaseNotes(${repository}, ${version}, ${packageName!})`);
-  const releases = await getCachedReleaseList(project, release);
+  const releases = await getCachedReleaseList(project, release, config.source);
   logger.trace({ releases }, 'Release list from getReleaseList');
   let releaseNotes: ChangeLogNotes | null = null;
 
@@ -235,18 +229,18 @@ function sectionize(text: string, level: number): string[] {
 }
 
 export async function getReleaseNotesMdFileInner(
-  project: ChangeLogProject
+  project: ChangeLogProject,
+  source: ChangeLogContentSource
 ): Promise<ChangeLogFile | null> {
   const { repository, type } = project;
   const apiBaseUrl = project.apiBaseUrl;
   const sourceDirectory = project.sourceDirectory!;
   try {
-    const fetch = getReleaseNoteSourceFor(type);
-    if (fetch === null) {
+    if (!source) {
       logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
       return null;
     }
-    return await fetch.getReleaseNotesMd(
+    return await source.getReleaseNotesMd(
       repository,
       apiBaseUrl,
       sourceDirectory
@@ -268,7 +262,8 @@ export async function getReleaseNotesMdFileInner(
 }
 
 export function getReleaseNotesMdFile(
-  project: ChangeLogProject
+  project: ChangeLogProject,
+  source: ChangeLogContentSource
 ): Promise<ChangeLogFile | null> {
   const { sourceDirectory, repository, apiBaseUrl } = project;
   // TODO: types (#22198)
@@ -280,14 +275,15 @@ export function getReleaseNotesMdFile(
   if (cachedResult !== undefined) {
     return cachedResult;
   }
-  const promisedRes = getReleaseNotesMdFileInner(project);
+  const promisedRes = getReleaseNotesMdFileInner(project, source);
   memCache.set(cacheKey, promisedRes);
   return promisedRes;
 }
 
 export async function getReleaseNotesMd(
   project: ChangeLogProject,
-  release: ChangeLogRelease
+  release: ChangeLogRelease,
+  source: ChangeLogContentSource
 ): Promise<ChangeLogNotes | null> {
   const { baseUrl, repository } = project;
   const version = release.version;
@@ -297,7 +293,7 @@ export async function getReleaseNotesMd(
     return null;
   }
 
-  const changelog = await getReleaseNotesMdFile(project);
+  const changelog = await getReleaseNotesMdFile(project, source);
   if (!changelog) {
     return null;
   }
@@ -390,7 +386,7 @@ export function releaseNotesCacheMinutes(releaseDate?: string | Date): number {
 
 export async function addReleaseNotes(
   input: ChangeLogResult | null | undefined,
-  config: BranchUpgradeConfig
+  config: ChangeLogConfig
 ): Promise<ChangeLogResult | null> {
   if (!input?.versions || !input.project?.type) {
     logger.debug('Missing project or versions');
@@ -412,7 +408,7 @@ export async function addReleaseNotes(
     let releaseNotes: ChangeLogNotes | null | undefined;
     const cacheKey = `${cacheKeyPrefix}:${v.version}`;
     releaseNotes = await packageCache.get(cacheNamespace, cacheKey);
-    releaseNotes ??= await getReleaseNotesMd(input.project, v);
+    releaseNotes ??= await getReleaseNotesMd(input.project, v, config.source);
     releaseNotes ??= await getReleaseNotes(input.project, v, config);
 
     // If there is no release notes, at least try to show the compare URL

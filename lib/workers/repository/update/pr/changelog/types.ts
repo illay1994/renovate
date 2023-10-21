@@ -1,4 +1,6 @@
-export abstract class ReleaseNoteSource {
+import type { BranchUpgradeConfig } from '../../../../types';
+
+export abstract class ChangeLogContentSource {
   abstract getReleaseList(
     project: ChangeLogProject,
     _release: ChangeLogRelease
@@ -37,6 +39,10 @@ export interface ChangeLogRelease {
 }
 
 export type ChangeLogPlatform = 'bitbucket' | 'gitea' | 'github' | 'gitlab';
+
+export interface ChangeLogConfig extends BranchUpgradeConfig {
+  source: ChangeLogContentSource;
+}
 
 export interface ChangeLogProject {
   packageName?: string;
