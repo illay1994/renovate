@@ -8,6 +8,8 @@ import * as githubGraphql from '../../../../../util/github/graphql';
 import type { GithubReleaseItem } from '../../../../../util/github/graphql/types';
 import * as _hostRules from '../../../../../util/host-rules';
 import { toBase64 } from '../../../../../util/string';
+import { GitHubChangeLogSource } from './github/source';
+import { GitLabChangeLogSource } from './gitlab/source';
 import {
   addReleaseNotes,
   getReleaseList,
@@ -119,7 +121,12 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
         versions: [{ version: '3.10.0', compare: { url: '' } }],
       };
       expect(
-        await addReleaseNotes(input as never, partial<ChangeLogConfig>())
+        await addReleaseNotes(
+          input as never,
+          partial<ChangeLogConfig>({
+            source: partial<ChangeLogContentSource>({ platform: 'github' }),
+          })
+        )
       ).toEqual({
         hasReleaseNotes: false,
         project: {
@@ -160,11 +167,15 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           }),
         ],
       } satisfies ChangeLogResult;
-      expect(await addReleaseNotes(input, partial<ChangeLogConfig>())).toEqual({
+      expect(
+        await addReleaseNotes(
+          input,
+          partial<ChangeLogConfig>({ source: new GitLabChangeLogSource() })
+        )
+      ).toEqual({
         hasReleaseNotes: false,
         project: {
           repository: 'gitlab-org/gitter/webapp',
-          type: 'gitlab',
           sourceDirectory: 'lib',
           apiBaseUrl: 'https://gitlab.com/api/v4/',
           baseUrl: 'https://gitlab.com/',
@@ -218,7 +229,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           repository: 'some/yet-other-repository',
         },
         partial<ChangeLogRelease>(),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
       expect(res).toMatchObject([
         {
@@ -254,7 +265,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           repository: 'some/yet-other-repository',
         },
         partial<ChangeLogRelease>(),
-        partial<ChangeLogContentSource>()
+        new GitLabChangeLogSource()
       );
       expect(res).toMatchObject([
         {
@@ -294,7 +305,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           baseUrl: 'https://my.custom.domain/',
         },
         partial<ChangeLogRelease>(),
-        partial<ChangeLogContentSource>()
+        new GitLabChangeLogSource()
       );
       expect(res).toMatchObject([
         {
@@ -378,7 +389,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body [#123](https://github.com/some/other-repository/issues/123), [#124](https://github.com/some/yet-other-repository/issues/124)\n',
@@ -420,7 +431,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: '',
@@ -462,7 +473,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body\n',
@@ -504,7 +515,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body\n',
@@ -581,7 +592,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body [#123](https://github.com/some/other-repository/issues/123), [#124](https://github.com/some/yet-other-repository/issues/124)\n',
@@ -625,7 +636,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body [#123](https://github.com/some/other-repository/issues/123), [#124](https://github.com/some/yet-other-repository/issues/124)\n',
@@ -669,7 +680,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body [#123](https://github.com/some/other-repository/issues/123), [#124](https://github.com/some/yet-other-repository/issues/124)\n',
@@ -712,7 +723,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body [#123](https://github.com/some/other-repository/issues/123), [#124](https://github.com/some/yet-other-repository/issues/124)\n',
@@ -750,7 +761,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitLabChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body #123, [#124](https://gitlab.com/some/yet-other-repository/issues/124)',
@@ -787,7 +798,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitLabChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body #123, [#124](https://gitlab.com/some/yet-other-repository/issues/124)',
@@ -824,7 +835,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.1',
           gitRef: '1.0.1',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitLabChangeLogSource() })
       );
       expect(res).toEqual({
         body: 'some body #123, [#124](https://gitlab.com/some/yet-other-repository/issues/124)',
@@ -891,7 +902,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.0',
           gitRef: '1.0.0',
         }),
-        partial<ChangeLogConfig>()
+        partial<ChangeLogConfig>({ source: new GitHubChangeLogSource() })
       );
       expect(res).toEqual({
         url: 'correct/url/tag.com',
@@ -927,6 +938,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
         }),
         partial<ChangeLogConfig>({
           extractVersion: 'app-(?<version>[0-9.]*)',
+          source: new GitHubChangeLogSource(),
         })
       );
       expect(res).toEqual({
@@ -953,7 +965,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '2.0.0',
           gitRef: '2.0.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
       expect(res).toBeNull();
     });
@@ -979,7 +991,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '2.0.0',
           gitRef: '2.0.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
       expect(res).toBeNull();
     });
@@ -1004,7 +1016,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.0',
           gitRef: '1.0.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
       expect(res).toBeNull();
     });
@@ -1029,7 +1041,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.0.0',
           gitRef: '1.0.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
       expect(res).toBeNull();
     });
@@ -1054,7 +1066,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '1.6.9',
           gitRef: '1.6.9',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
       expect(res).toMatchSnapshot({
         notesSourceUrl:
@@ -1083,7 +1095,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '20.26.0',
           gitRef: '20.26.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitLabChangeLogSource()
       );
 
       expect(res).toMatchSnapshot({
@@ -1115,7 +1127,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '20.26.0',
           gitRef: '20.26.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitLabChangeLogSource()
       );
 
       expect(res).toMatchSnapshot({
@@ -1145,7 +1157,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '22.0.0',
           gitRef: '22.0.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
 
       expect(res).toMatchSnapshot({
@@ -1181,7 +1193,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '3.10.0',
           gitRef: '3.10.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
 
       expect(res).toMatchSnapshot({
@@ -1211,7 +1223,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
           version: '3.10.0',
           gitRef: '3.10.0',
         }),
-        partial<ChangeLogContentSource>()
+        new GitHubChangeLogSource()
       );
 
       expect(res).toMatchSnapshot({
@@ -1259,7 +1271,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
             version: '15.3.0',
             gitRef: '15.3.0',
           }),
-          partial<ChangeLogContentSource>()
+          new GitHubChangeLogSource()
         );
         versionOneNotes = res!;
 
@@ -1290,7 +1302,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
             version: '15.2.0',
             gitRef: '15.2.0',
           }),
-          partial<ChangeLogContentSource>()
+          new GitHubChangeLogSource()
         );
         versionTwoNotes = res!;
 
@@ -1321,7 +1333,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
             version: '4.33.0',
             gitRef: '4.33.0',
           }),
-          partial<ChangeLogContentSource>()
+          new GitLabChangeLogSource()
         );
         versionTwoNotes = res!;
 
@@ -1358,7 +1370,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
             version: '4.33.0',
             gitRef: '4.33.0',
           }),
-          partial<ChangeLogContentSource>()
+          new GitLabChangeLogSource()
         );
         versionTwoNotes = res!;
 
@@ -1379,7 +1391,7 @@ describe('workers/repository/update/pr/changelog/release-notes', () => {
             version: '0.72.3',
             gitRef: '0.72.3',
           }),
-          partial<ChangeLogContentSource>()
+          new GitHubChangeLogSource()
         );
         expect(res).toBeNull();
       });
