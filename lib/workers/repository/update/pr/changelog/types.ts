@@ -1,12 +1,15 @@
 import type { BranchUpgradeConfig } from '../../../../types';
 
 export abstract class ChangeLogContentSource {
+  constructor(
+    public readonly platform: ChangeLogPlatform
+  )
   abstract getReleaseList(
     project: ChangeLogProject,
     _release: ChangeLogRelease
   ): Promise<ChangeLogNotes[]>;
 
-  abstract getReleaseNotesMd(
+  abstract getChangeLogFile(
     repository: string,
     apiBaseUrl: string,
     sourceDirectory?: string
@@ -46,7 +49,6 @@ export interface ChangeLogConfig extends BranchUpgradeConfig {
 
 export interface ChangeLogProject {
   packageName?: string;
-  type: ChangeLogPlatform;
   apiBaseUrl: string;
   baseUrl: string;
   repository: string;

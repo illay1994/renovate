@@ -36,7 +36,7 @@ export class GitLabChangeLogSource extends ChangeLogSource {
     return repository.split('/').length >= 2;
   }
 
-  override async getReleaseNotesMd(
+  override async getChangeLogFile(
     repository: string,
     apiBaseUrl: string,
     sourceDirectory?: string

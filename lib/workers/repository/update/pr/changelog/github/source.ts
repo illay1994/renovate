@@ -1,8 +1,17 @@
 import URL from 'node:url';
+import changelogFilenameRegex from 'changelog-filename-regex';
 import { GlobalConfig } from '../../../../../../config/global';
 import { logger } from '../../../../../../logger';
+import type {
+  GithubGitBlob,
+  GithubGitTree,
+  GithubGitTreeNode,
+} from '../../../../../../types/platform/github';
+import { queryReleases } from '../../../../../../util/github/graphql';
 import * as hostRules from '../../../../../../util/host-rules';
+import { GithubHttp } from '../../../../../../util/http/github';
 import { fromBase64 } from '../../../../../../util/string';
+import { ensureTrailingSlash, joinUrlParts } from '../../../../../../util/url';
 import type { BranchUpgradeConfig } from '../../../../../types';
 import { ChangeLogSource } from '../source';
 import type {
@@ -12,15 +21,6 @@ import type {
   ChangeLogProject,
   ChangeLogRelease,
 } from '../types';
-import changelogFilenameRegex from 'changelog-filename-regex';
-import type {
-  GithubGitTree,
-  GithubGitTreeNode,
-  GithubGitBlob,
-} from '../../../../../../types/platform/github';
-import { queryReleases } from '../../../../../../util/github/graphql';
-import { GithubHttp } from '../../../../../../util/http/github';
-import { ensureTrailingSlash, joinUrlParts } from '../../../../../../util/url';
 
 export const id = 'github-changelog';
 const http = new GithubHttp(id);
@@ -99,7 +99,7 @@ export class GitHubChangeLogSource extends ChangeLogSource {
     return { isValid: true };
   }
 
-  override async getReleaseNotesMd(
+  override async getChangeLogFile(
     repository: string,
     apiBaseUrl: string,
     sourceDirectory: string

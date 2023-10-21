@@ -12,9 +12,9 @@ import type { BranchUpgradeConfig } from '../../../../../types';
 import { ChangeLogSource } from '../source';
 import type {
   ChangeLogFile,
+  ChangeLogNotes,
   ChangeLogProject,
   ChangeLogRelease,
-  ChangeLogNotes,
 } from '../types';
 
 export const id = 'gitea-changelog';
@@ -41,7 +41,7 @@ export class GiteaChangeLogSource extends ChangeLogSource {
   override hasValidRepository(repository: string): boolean {
     return repository.split('/').length === 2;
   }
-  override async getReleaseNotesMd(
+  override async getChangeLogFile(
     repository: string,
     apiBaseUrl: string,
     sourceDirectory?: string

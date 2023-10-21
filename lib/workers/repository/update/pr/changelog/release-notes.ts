@@ -30,19 +30,15 @@ export async function getReleaseList(
   source: ChangeLogContentSource
 ): Promise<ChangeLogNotes[]> {
   logger.trace('getReleaseList()');
-  const { apiBaseUrl, repository, type } = project;
+  const { apiBaseUrl, repository } = project;
   try {
-    if (source === null) {
-      logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
-      return [];
-    }
     return await source.getReleaseList(project, release);
   } catch (err) /* istanbul ignore next */ {
     if (err.statusCode === 404) {
-      logger.debug({ repository, type, apiBaseUrl }, 'getReleaseList 404');
+      logger.debug({ repository, apiBaseUrl }, 'getReleaseList 404');
     } else {
       logger.debug(
-        { repository, type, apiBaseUrl, err },
+        { repository, apiBaseUrl, err },
         'getReleaseList error'
       );
     }
@@ -232,15 +228,11 @@ export async function getReleaseNotesMdFileInner(
   project: ChangeLogProject,
   source: ChangeLogContentSource
 ): Promise<ChangeLogFile | null> {
-  const { repository, type } = project;
+  const { repository } = project;
   const apiBaseUrl = project.apiBaseUrl;
   const sourceDirectory = project.sourceDirectory!;
   try {
-    if (!source) {
-      logger.warn({ apiBaseUrl, repository, type }, 'Invalid project type');
-      return null;
-    }
-    return await source.getReleaseNotesMd(
+    return await source.getChangeLogFile(
       repository,
       apiBaseUrl,
       sourceDirectory
@@ -248,12 +240,12 @@ export async function getReleaseNotesMdFileInner(
   } catch (err) /* istanbul ignore next */ {
     if (err.statusCode === 404) {
       logger.debug(
-        { repository, type, apiBaseUrl },
+        { repository, apiBaseUrl },
         'Error 404 getting changelog md'
       );
     } else {
       logger.debug(
-        { err, repository, type, apiBaseUrl },
+        { err, repository, apiBaseUrl },
         'Error getting changelog md'
       );
     }
@@ -388,7 +380,7 @@ export async function addReleaseNotes(
   input: ChangeLogResult | null | undefined,
   config: ChangeLogConfig
 ): Promise<ChangeLogResult | null> {
-  if (!input?.versions || !input.project?.type) {
+  if (!input?.versions || !input?.project) {
     logger.debug('Missing project or versions');
     return input ?? null;
   }
@@ -398,7 +390,8 @@ export async function addReleaseNotes(
     hasReleaseNotes: false,
   };
 
-  const { repository, sourceDirectory, type: projectType } = input.project;
+  const projectType = config.source.platform;
+  const { repository, sourceDirectory } = input.project;
   const cacheNamespace = `changelog-${projectType}-notes@v2`;
   const cacheKeyPrefix = sourceDirectory
     ? `${repository}:${sourceDirectory}`

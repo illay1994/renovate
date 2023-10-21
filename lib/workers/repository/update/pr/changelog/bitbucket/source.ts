@@ -32,7 +32,7 @@ export class BitbucketChangeLogSource extends ChangeLogSource {
   ): string {
     return `${baseUrl}${repository}/branches/compare/${nextHead}%0D${prevHead}`;
   }
-  override async getReleaseNotesMd(
+  override async getChangeLogFile(
     repository: string,
     apiBaseUrl: string,
     _sourceDirectory?: string

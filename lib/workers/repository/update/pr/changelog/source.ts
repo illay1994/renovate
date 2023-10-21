@@ -23,14 +23,14 @@ export abstract class ChangeLogSource extends ChangeLogContentSource {
   private readonly cacheNamespace: string;
 
   constructor(
-    private readonly platform: ChangeLogPlatform,
+    platform: ChangeLogPlatform,
     private readonly datasource:
       | 'bitbucket-tags'
       | 'gitea-tags'
       | 'github-tags'
       | 'gitlab-tags'
   ) {
-    super();
+    super(platform);
     this.cacheNamespace = `changelog-${platform}-release`;
   }
 
@@ -169,7 +169,6 @@ export abstract class ChangeLogSource extends ChangeLogContentSource {
       project: {
         apiBaseUrl,
         baseUrl,
-        type: this.platform,
         repository,
         sourceUrl,
         sourceDirectory,
