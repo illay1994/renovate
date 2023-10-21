@@ -12,8 +12,9 @@ import type {
   ChangeLogRelease,
 } from '../types';
 
-const id = 'gitlab-changelog';
+export const id = 'gitlab-changelog';
 const http = new GitlabHttp(id);
+
 export class GitLabChangeLogSource extends ChangeLogSource {
   constructor() {
     super('gitlab', 'gitlab-tags');

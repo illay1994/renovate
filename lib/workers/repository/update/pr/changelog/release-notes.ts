@@ -37,10 +37,7 @@ export async function getReleaseList(
     if (err.statusCode === 404) {
       logger.debug({ repository, apiBaseUrl }, 'getReleaseList 404');
     } else {
-      logger.debug(
-        { repository, apiBaseUrl, err },
-        'getReleaseList error'
-      );
+      logger.debug({ repository, apiBaseUrl, err }, 'getReleaseList error');
     }
   }
   return [];

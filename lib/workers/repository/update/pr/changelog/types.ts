@@ -1,10 +1,8 @@
 import type { BranchUpgradeConfig } from '../../../../types';
 
 export abstract class ChangeLogContentSource {
-  constructor(
-    public readonly platform: ChangeLogPlatform
-  ) {}
-  
+  constructor(public readonly platform: ChangeLogPlatform) {}
+
   abstract getReleaseList(
     project: ChangeLogProject,
     _release: ChangeLogRelease
