@@ -21,10 +21,7 @@ import { DepTypesMigration } from './custom/dep-types-migration';
 import { DryRunMigration } from './custom/dry-run-migration';
 import { EnabledManagersMigration } from './custom/enabled-managers-migration';
 import { ExtendsMigration } from './custom/extends-migration';
-import {
-  FetchChangeLogsMigration,
-  FetchReleaseNotesMigration,
-} from './custom/fetch-release-notes-migration';
+import { FetchChangeLogsMigration } from './custom/fetch-release-notes-migration';
 import { GoModTidyMigration } from './custom/go-mod-tidy-migration';
 import { HostRulesMigration } from './custom/host-rules-migration';
 import { IgnoreNodeModulesMigration } from './custom/ignore-node-modules-migration';
@@ -155,9 +152,8 @@ export class MigrationsService {
     DatasourceMigration,
     RecreateClosedMigration,
     StabilityDaysMigration,
-    FetchReleaseNotesMigration,
-    CustomManagersMigration,
     FetchChangeLogsMigration,
+    CustomManagersMigration,
   ];
 
   static run(originalConfig: RenovateConfig): RenovateConfig {
