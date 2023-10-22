@@ -1,4 +1,7 @@
-import { FetchReleaseNotesMigration } from './fetch-release-notes-migration';
+import {
+  FetchChangeLogsMigration,
+  FetchReleaseNotesMigration,
+} from './fetch-release-notes-migration';
 
 describe('config/migrations/custom/fetch-release-notes-migration', () => {
   it('migrates', () => {
@@ -16,6 +19,25 @@ describe('config/migrations/custom/fetch-release-notes-migration', () => {
       },
       {
         fetchReleaseNotes: 'pr',
+      }
+    );
+  });
+
+  it('migrates change logs', () => {
+    expect(FetchChangeLogsMigration).toMigrate(
+      {
+        fetchChangeLogs: false as never,
+      },
+      {
+        fetchChangeLogs: 'off',
+      }
+    );
+    expect(FetchChangeLogsMigration).toMigrate(
+      {
+        fetchChangeLogs: true as never,
+      },
+      {
+        fetchChangeLogs: 'pr',
       }
     );
   });
