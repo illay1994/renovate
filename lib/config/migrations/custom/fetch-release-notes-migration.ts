@@ -2,7 +2,6 @@ import is from '@sindresorhus/is';
 import { AbstractMigration } from '../base/abstract-migration';
 
 export class FetchReleaseNotesMigration extends AbstractMigration {
-  override readonly deprecated = true;
   override readonly propertyName = 'fetchReleaseNotes';
 
   override run(value: unknown): void {
