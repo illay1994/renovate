@@ -11,6 +11,7 @@ import { logger } from '../../../../../logger/index.ts';
 import { platform } from '../../../../../modules/platform/index.ts';
 import * as memCache from '../../../../../util/cache/memory/index.ts';
 import * as packageCache from '../../../../../util/cache/package/index.ts';
+import { buildCacheKey } from '../../../../../util/cache/package/key.ts';
 import type { PackageCacheNamespace } from '../../../../../util/cache/package/types.ts';
 import { detectPlatform } from '../../../../../util/common.ts';
 import { linkify } from '../../../../../util/markdown.ts';
@@ -69,8 +70,7 @@ export function getCachedReleaseList(
   source: ChangeLogSource,
 ): Promise<ChangeLogNotes[]> {
   const { repository, apiBaseUrl } = project;
-  // TODO: types (#22198)
-  const cacheKey = `getReleaseList-${apiBaseUrl}-${repository}`;
+  const cacheKey = buildCacheKey('getReleaseList', apiBaseUrl, repository);
   const cachedResult = memCache.get<Promise<ChangeLogNotes[]>>(cacheKey);
   // istanbul ignore if
   if (cachedResult !== undefined) {
@@ -334,10 +334,12 @@ export function getReleaseNotesMdFile(
   source: ChangeLogSource,
 ): Promise<ChangeLogFile | null> {
   const { sourceDirectory, repository, apiBaseUrl } = project;
-  // TODO: types (#22198)
-  const cacheKey = sourceDirectory
-    ? `getReleaseNotesMdFile@v2-${repository}-${sourceDirectory}-${apiBaseUrl}`
-    : `getReleaseNotesMdFile@v2-${repository}-${apiBaseUrl}`;
+  const cacheKey = buildCacheKey(
+    'getReleaseNotesMdFile@v2',
+    repository,
+    sourceDirectory,
+    apiBaseUrl,
+  );
   const cachedResult = memCache.get<Promise<ChangeLogFile | null>>(cacheKey);
   // istanbul ignore if
   if (cachedResult !== undefined) {
@@ -504,8 +506,7 @@ export async function addReleaseNotes(
         !shouldTruncateToPlatformLimit ||
         fetchedNotesLength < maxBodyLength
       ) {
-        const gitRefCachePart = v.gitRef ? `:${v.gitRef}` : '';
-        const cacheKey = `${cacheKeyPrefix}:${v.version}${gitRefCachePart}`;
+        const cacheKey = buildCacheKey(cacheKeyPrefix, v.version, v.gitRef);
         releaseNotes = await packageCache.get(cacheNamespace, cacheKey);
         if (!releaseNotes) {
           releaseNotes = await getReleaseNotesMd(input.project, v, source);
